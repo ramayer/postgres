@@ -1426,7 +1426,18 @@ xml_parse(text *data, XmlOptionType xmloption_arg, bool preserve_whitespace,
 			xml_ereport(xmlerrcxt, ERROR, ERRCODE_OUT_OF_MEMORY,
 						"could not allocate parser context");
 
-		if (xmloption_arg == XMLOPTION_DOCUMENT)
+        /*
+         * allow large XML entity values.
+         * 
+         * Note that the latter code path doesn't preserve
+         * the ctxt->options value; so force the first code
+         * path.   Yes, this breaks empty documents.
+         *
+         * 
+         */
+		ctxt->options |= XML_PARSE_HUGE;
+
+		if (true || (xmloption_arg == XMLOPTION_DOCUMENT))
 		{
 			/*
 			 * Note, that here we try to apply DTD defaults
@@ -1462,6 +1473,15 @@ xml_parse(text *data, XmlOptionType xmloption_arg, bool preserve_whitespace,
 			Assert(doc->encoding == NULL);
 			doc->encoding = xmlStrdup((const xmlChar *) "UTF-8");
 			doc->standalone = standalone;
+
+            /*
+             * Attempt to allow large XML entity values.
+             *
+             * Hmm..... the docs imply this would work, but the parseFlag
+             * does not get copied to the xmlParserCtxtPtr created
+             * within xmlParseBalancedChunkMemory.   :(
+            */
+			doc->parseFlags = XML_PARSE_HUGE;
 
 			/* allow empty content */
 			if (*(utf8string + count))
