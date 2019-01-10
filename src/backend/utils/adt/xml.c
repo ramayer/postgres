@@ -1422,6 +1422,10 @@ xml_parse(text *data, XmlOptionType xmloption_arg, bool preserve_whitespace,
 		xmlInitParser();
 
 		ctxt = xmlNewParserCtxt();
+
+        /* allow large XML entity values */
+		ctxt->options |= XML_PARSE_HUGE;
+
 		if (ctxt == NULL || xmlerrcxt->err_occurred)
 			xml_ereport(xmlerrcxt, ERROR, ERRCODE_OUT_OF_MEMORY,
 						"could not allocate parser context");
